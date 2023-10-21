@@ -48,6 +48,8 @@
 #define POWERCTRL_GET_VOLTAGE_SCALING() PWR_REGULATOR_VOLTAGE_SCALE0
 #elif defined(STM32H723xx)
 #define POWERCTRL_GET_VOLTAGE_SCALING() LL_PWR_GetRegulVoltageScaling()
+#elif defined(STM32H5)
+#define POWERCTRL_GET_VOLTAGE_SCALING() LL_PWR_GetRegulVoltageScaling()
 #else
 #define POWERCTRL_GET_VOLTAGE_SCALING()     \
     (((PWR->CSR1 & PWR_CSR1_ACTVOS) && (SYSCFG->PWRCR & SYSCFG_PWRCR_ODEN)) ? \
@@ -793,6 +795,14 @@ void powerctrl_enter_stop_mode(void) {
     }
     #endif
 
+    #if defined(STM32H5)
+    // Save RCC CR to re-enable OSCs and PLLs after wake up from low power mode.
+    uint32_t rcc_cr = RCC->CR;
+
+    // Save the current voltage scaling level to restore after exiting low power mode.
+    uint32_t vscaling = POWERCTRL_GET_VOLTAGE_SCALING();
+    #endif
+
     #if defined(STM32WB)
     powerctrl_low_power_prep_wb55();
     #endif
@@ -817,9 +827,9 @@ void powerctrl_enter_stop_mode(void) {
     while (__HAL_RCC_GET_SYSCLK_SOURCE() != RCC_CFGR_SWS_HSI48) {
     }
 
-    #else
+    #else /* defined(STM32F0) */
 
-    #if defined(STM32H7)
+    #if defined(STM32H7) || defined(STM32H5)
     // When exiting from Stop or Standby modes, the Run mode voltage scaling is reset to
     // the default VOS3 value. Restore the voltage scaling to the previous voltage scale.
     if (vscaling != POWERCTRL_GET_VOLTAGE_SCALING()) {
@@ -859,7 +869,7 @@ void powerctrl_enter_stop_mode(void) {
     while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL1) {
     }
 
-    #else
+    #else /* defined(STM32H5) */
 
     // enable PLL
     __HAL_RCC_PLL_ENABLE();
@@ -879,7 +889,7 @@ void powerctrl_enter_stop_mode(void) {
     }
     #endif
 
-    #endif
+    #endif /* defined(STM32H5) */
 
     powerctrl_disable_hsi_if_unused();
 
@@ -929,6 +939,15 @@ void powerctrl_enter_stop_mode(void) {
     }
     #endif
 
+    #if defined(STM32H5)
+    if (rcc_cr & RCC_CR_HSI48ON) {
+        // Enable HSI48.
+        LL_RCC_HSI48_Enable();
+        while (!LL_RCC_HSI48_IsReady()) {
+        }
+    }
+    #endif
+
     #if defined(STM32L4)
     // Enable PLLSAI1 for peripherals that use it
     RCC->CR |= RCC_CR_PLLSAI1ON;
@@ -936,7 +955,7 @@ void powerctrl_enter_stop_mode(void) {
     }
     #endif
 
-    #endif
+    #endif /* defined(STM32F0) */
 
     #if defined(MICROPY_BOARD_LEAVE_STOP)
     MICROPY_BOARD_LEAVE_STOP
