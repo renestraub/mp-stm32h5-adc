@@ -15,6 +15,7 @@
 
 // Enable externally controlled pins.
 #define MICROPY_HW_PIN_EXT_COUNT        (7)
+#define MICROPY_HW_ADC_EXT_COUNT        (4)
 
 // Enable USB Mass Storage with FatFS filesystem.
 #define MICROPY_HW_USB_MSC              (1)
@@ -39,7 +40,7 @@
 
 // Bluetooth config.
 #define MICROPY_HW_BLE_UART_ID          (1)
-#define MICROPY_HW_BLE_UART_BAUDRATE    (119600)
+#define MICROPY_HW_BLE_UART_BAUDRATE    (115200)
 
 // WiFi/NINA-W10 config.
 #define MICROPY_HW_WIFI_SPI_ID          (1)

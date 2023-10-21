@@ -33,9 +33,9 @@ if platform.python_version_tuple()[0] == "2":
 
     str_cons = lambda val, enc=None: str(val)
     bytes_cons = lambda val, enc=None: bytearray(val)
-    is_str_type = lambda o: type(o) is str
+    is_str_type = lambda o: isinstance(o, str)
     is_bytes_type = lambda o: type(o) is bytearray
-    is_int_type = lambda o: type(o) is int or type(o) is long
+    is_int_type = lambda o: isinstance(o, int) or isinstance(o, long)  # noqa: F821
 
     def hexlify_to_str(b):
         x = hexlify_py2(b)
@@ -46,9 +46,9 @@ else:
 
     str_cons = str
     bytes_cons = bytes
-    is_str_type = lambda o: type(o) is str
-    is_bytes_type = lambda o: type(o) is bytes
-    is_int_type = lambda o: type(o) is int
+    is_str_type = lambda o: isinstance(o, str)
+    is_bytes_type = lambda o: isinstance(o, bytes)
+    is_int_type = lambda o: isinstance(o, int)
 
     def hexlify_to_str(b):
         return str(hexlify(b, ":"), "ascii")
@@ -88,7 +88,7 @@ class FreezeError(Exception):
 
 class Config:
     MPY_VERSION = 6
-    MPY_SUB_VERSION = 1
+    MPY_SUB_VERSION = 2
     MICROPY_LONGINT_IMPL_NONE = 0
     MICROPY_LONGINT_IMPL_LONGLONG = 1
     MICROPY_LONGINT_IMPL_MPZ = 2
@@ -756,7 +756,7 @@ class CompiledModule:
                 const_int_content += (digs.count(",") + 1) * bits_per_dig // 8
                 const_obj_content += 4 * 4
                 return "MP_ROM_PTR(&%s)" % obj_name
-        elif type(obj) is float:
+        elif isinstance(obj, float):
             macro_name = "%s_macro" % obj_name
             print(
                 "#if MICROPY_OBJ_REPR == MICROPY_OBJ_REPR_A || MICROPY_OBJ_REPR == MICROPY_OBJ_REPR_B"
@@ -777,7 +777,7 @@ class CompiledModule:
             print("#endif")
             const_obj_content += 3 * 4
             return macro_name
-        elif type(obj) is complex:
+        elif isinstance(obj, complex):
             print(
                 "static const mp_obj_complex_t %s = {{&mp_type_complex}, (mp_float_t)%.16g, (mp_float_t)%.16g};"
                 % (obj_name, obj.real, obj.imag)
